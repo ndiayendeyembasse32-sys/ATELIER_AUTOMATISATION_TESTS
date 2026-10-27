@@ -1,16 +1,30 @@
-from flask import Flask, render_template_string, render_template, jsonify, request, redirect, url_for, session
-from flask import render_template
-from flask import json
-from urllib.request import urlopen
-from werkzeug.utils import secure_filename
-import sqlite3
+from flask import Flask, jsonify, render_template
+from storage import init_db, list_runs, save_run
+from tester.runner import execute_run
 
 app = Flask(__name__)
 
-@app.get("/")
-def consignes():
-     return render_template('consignes.html')
+# Initialise la base SQLite au démarrage
+init_db()  #[cite: 11, 13]
 
-if __name__ == "__main__":
-    # utile en local uniquement
-    app.run(host="0.0.0.0", port=5000, debug=True)
+
+@app.route("/run")  #
+def trigger_run():
+    """Exécute la série de tests et sauvegarde le résultat[cite: 11, 13]."""
+    data = execute_run()
+    save_run(data)
+    return jsonify({"message": "Run exécuté avec succès !", "data": data})
+
+
+@app.route("/dashboard")  #[cite: 13]
+def dashboard():
+    """Affiche le tableau de bord avec le dernier run et l'historique[cite: 11, 13, 15]."""
+    runs = list_runs()
+    last_run = runs[0] if runs else None
+    return render_template("dashboard.html", last_run=last_run, runs=runs)
+
+
+@app.route("/health")  #[cite: 13, 15]
+def health():
+    """Endpoint de santé pour vérifier le bon fonctionnement (Bonus)[cite: 13, 15]."""
+    return jsonify({"status": "OK", "database": "connected"})
