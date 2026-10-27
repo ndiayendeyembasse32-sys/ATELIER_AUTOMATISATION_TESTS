@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard QoS - Tests API</title>
+    <style>
+        body { font-family: system-ui, sans-serif; margin: 30px; background-color: #f4f6f9; color: #333; }
+        h1, h2 { color: #1e293b; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .metrics { display: flex; gap: 15px; margin-bottom: 15px; }
+        .metric-box { background: #e2e8f0; padding: 15px; border-radius: 6px; flex: 1; text-align: center; }
+        .metric-value { font-size: 1.5em; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f1f5f9; }
+        .status-PASS { color: green; font-weight: bold; }
+        .status-FAIL { color: red; font-weight: bold; }
+        .btn { display: inline-block; padding: 10px 15px; background: #2563eb; color: white; text-decoration: none; border-radius: 5px; }
+        .btn:hover { background: #1d4ed8; }
+    </style>
+</head>
+<body>
+
+    <h1>Dashboard de Monitoring API</h1>
+    <a href="/run" class="btn">Lancer un run manuellement</a>
+
+    {% if last_run %}
+    <div class="card">
+        <h2>Dernier Run — {{ last_run.timestamp[:19].replace('T', ' ') }}</h2>
+        <div class="metrics">
+            <div class="metric-box">
+                <div>Tests Réussis / Échoués</div>
+                <div class="metric-value">{{ last_run.summary.passed }} / {{ last_run.summary.failed }}</div>
+            </div>
+            <div class="metric-box">
+                <div>Taux d'erreur</div>
+                <div class="metric-value">{{ (last_run.summary.error_rate * 100)|round(1) }} %</div>
+            </div>
+            <div class="metric-box">
+                <div>Latence Moyenne</div>
+                <div class="metric-value">{{ last_run.summary.latency_ms_avg }} ms</div>
+            </div>
+            <div class="metric-box">
+                <div>Latence p95</div>
+                <div class="metric-value">{{ last_run.summary.latency_ms_p95 }} ms</div>
+            </div>
+        </div>
+
+        <h3>Détails des assertions</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Test</th>
+                    <th>Statut</th>
+                    <th>Latence</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for test in last_run.tests %}
+                <tr>
+                    <td>{{ test.name }}</td>
+                    <td class="status-{{ test.status }}">{{ test.status }}</td>
+                    <td>{{ test.latency_ms }} ms</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card">
+        <p>Aucun run enregistré pour le moment. Cliquez sur le bouton ci-dessus ou appelez l'URL <code>/run</code>.</p>
+    </div>
+    {% endif %}
+
+    {% if runs %}
+    <div class="card">
+        <h2>Historique des Runs</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Horodatage</th>
+                    <th>Succès</th>
+                    <th>Échecs</th>
+                    <th>Latence Moyenne</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for run in runs %}
+                <tr>
+                    <td>{{ run.timestamp[:19].replace('T', ' ') }}</td>
+                    <td class="status-PASS">{{ run.summary.passed }}</td>
+                    <td class="status-FAIL">{{ run.summary.failed }}</td>
+                    <td>{{ run.summary.latency_ms_avg }} ms</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+</body>
+</html>
