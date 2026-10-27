@@ -2,11 +2,13 @@ import time
 import requests
 
 
-def call_api(url, timeout=3, retries=1):
+def call_api(url, timeout=5, retries=1):
     for attempt in range(retries + 1):
         start = time.time()
         try:
-            response = requests.get(url, timeout=timeout)
+            # On ajoute un User-Agent pour éviter d'être bloqué comme un bot
+            headers = {"User-Agent": "Mozilla/5.0"}
+            response = requests.get(url, timeout=timeout, headers=headers)
             latency = int((time.time() - start) * 1000)
             return response, latency
         except requests.RequestException:
